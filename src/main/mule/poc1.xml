@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="828948d7-4e5f-4f73-84c6-573f98c23c1f" >
+		<file:connection workingDir="C:\Users\LUPIV" />
+	</file:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="38f83190-c3e7-4732-9bb0-4acf883295ef" >
+		<salesforce:basic-connection username="vipul@capgemini.com" password="kissmyass96@@" securityToken="Yve6dacTd9AC6MFX2N5lWqBeW" />
+	</salesforce:sfdc-config>
+	<file:config name="File_Config1" doc:name="File Config" doc:id="4d156a1e-eebf-4bde-a39c-30ee54170c85" >
+		<file:connection workingDir="D:\mule4poc" />
+	</file:config>
+	<file:config name="File_Config2" doc:name="File Config" doc:id="c2628139-2993-4e41-b456-2b9c6666eeff" >
+		<file:connection workingDir="D:\mule4poc" />
+	</file:config>
+	<flow name="poc1Flow" doc:id="78c1c452-46bf-42df-a410-48687e97a333" >
+		<file:listener doc:name="On New File" doc:id="39cd64df-ff7d-4b2a-945b-445e8fd3785d" >
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</file:listener>
+		<ee:transform doc:name="Transform Message" doc:id="8729961c-a929-40b3-949d-45fa181deb13" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<batch:job jobName="poc1Batch_Job" doc:id="ab9a1ccf-82b1-4d21-9df9-c9460f10efb6" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="397bdca1-76f8-46d0-b947-ca04fe6e538e" >
+					<ee:transform doc:name="Copy_of_Transform Message" doc:id="5e4f2d46-2beb-4502-8fbe-6229249c990a" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	Name : payload.Name,
+	Course__c : payload.Course,
+	E_Mail__c : payload.Email,
+	Status__c : payload.Status,
+	Tech__c : payload.Tech
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="a304e05c-3bb3-40ed-850b-48339f3d31d1" size="10">
+						<salesforce:create-single doc:name="Create single" doc:id="3c5193cc-8454-4aa0-8d9b-2bc2110e810c" config-ref="Salesforce_Config" type="CertificationList__c"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<ee:transform doc:name="Transform Message" doc:id="1c828aed-bfbd-458b-b2b3-3043df688bf5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="endTime" ><![CDATA[%dw 2.0
+output application/java
+---
+now()]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="3f5dadf2-ac08-4a40-84c5-9080695baecc" />
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>
